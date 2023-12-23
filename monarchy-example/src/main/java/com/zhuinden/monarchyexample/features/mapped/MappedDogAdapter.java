@@ -2,6 +2,7 @@ package com.zhuinden.monarchyexample.features.mapped;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,6 +57,8 @@ class MappedDogAdapter
         public ViewHolder(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
+
+            textView = itemView.findViewById(R.id.dog_name);
         }
 
         public void bind(Dog dog) {

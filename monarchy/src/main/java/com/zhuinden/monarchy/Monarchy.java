@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,6 +23,7 @@ import javax.annotation.Nullable;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
+
 import io.realm.OrderedCollectionChangeSet;
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
@@ -111,7 +113,7 @@ public final class Monarchy {
     @Nonnull
     public static RealmConfiguration getDefaultConfiguration() {
         final RealmConfiguration config = Realm.getDefaultConfiguration();
-        if(config == invalidDefaultConfig || config == null) {
+        if (config == invalidDefaultConfig || config == null) {
             throw new IllegalStateException("No default configuration is set!");
         }
         return config;
@@ -146,7 +148,7 @@ public final class Monarchy {
         @Nonnull
         public Builder setWriteAsyncExecutor(@Nonnull Executor executor) {
             //noinspection ConstantConditions
-            if(executor == null) {
+            if (executor == null) {
                 throw new IllegalArgumentException("executor should not be null!");
             }
             this.writeScheduler = executor;
@@ -174,7 +176,7 @@ public final class Monarchy {
     }
 
     private void assertMainThread() {
-        if(Looper.getMainLooper().getThread() != Thread.currentThread()) {
+        if (Looper.getMainLooper().getThread() != Thread.currentThread()) {
             throw new IllegalStateException("This method can only be called on the main thread!");
         }
     }
@@ -195,36 +197,44 @@ public final class Monarchy {
     <T extends RealmModel> void createAndObserveRealmQuery(@Nullable final LiveResults<T> liveResults) {
         Realm realm = realmThreadLocal.get();
         checkRealmValid(realm);
-        if(liveResults == null) {
+        if (liveResults == null) {
             return;
         }
         RealmResults<T> results = liveResults.createQuery(realm);
-        resultsRefs.get().put(liveResults, results);
+//        resultsRefs.get().put(liveResults, results);
+        Log.i("Monarchy","-------1111111111111-----------createAndObserveRealmQuery------------------");
         results.addChangeListener(new RealmChangeListener<RealmResults<T>>() {
             @Override
             public void onChange(@Nonnull RealmResults<T> realmResults) {
+                Log.i("Monarchy","-------3333333333333333333333-----------createAndObserveRealmQuery------------------");
+                try {
+                    throw new  RuntimeException("----------调用栈---------------");
+                } catch (Exception e) {
+                   e.printStackTrace();
+                }
                 liveResults.updateResults(realmResults);
             }
         });
+        Log.i("Monarchy","-------2222222222222222222222222222-----------createAndObserveRealmQuery------------------");
     }
 
     // CALL THIS SYNC ON MONARCHY THREAD
     <T extends RealmModel> void destroyRealmQuery(@Nullable final LiveResults<T> liveResults) {
         Realm realm = realmThreadLocal.get();
         checkRealmValid(realm);
-        if(liveResults == null) {
+        if (liveResults == null) {
             return;
         }
         RealmResults<? extends RealmModel> realmResults = resultsRefs.get().remove(liveResults);
-        if(realmResults != null) {
+        if (realmResults != null) {
             realmResults.removeAllChangeListeners();
         }
     }
 
     <T extends RealmModel> void startListening(@Nullable final LiveResults<T> liveResults) {
         // build Realm instance
-        if(refCount.getAndIncrement() == 0) {
-            synchronized(LOCK) {
+        if (refCount.getAndIncrement() == 0) {
+            synchronized (LOCK) {
                 HandlerThread handlerThread = new HandlerThread("MONARCHY_REALM-#" + hashCode());
                 handlerThread.start();
                 Handler handler = new Handler(handlerThread.getLooper());
@@ -234,7 +244,7 @@ public final class Monarchy {
                     @Override
                     public void run() {
                         Realm realm = Realm.getInstance(getRealmConfiguration());
-                        if(realmThreadLocal.get() == null) {
+                        if (realmThreadLocal.get() == null) {
                             realmThreadLocal.set(realm);
                         }
                     }
@@ -253,7 +263,7 @@ public final class Monarchy {
 
     <T extends RealmModel> void stopListening(@Nullable final LiveResults<T> liveResults) {
         Handler handler = this.handler.get();
-        if(handler == null) {
+        if (handler == null) {
             return; // edge case, hopefully doesn't happen
         }
         // destroy Realm query
@@ -267,12 +277,12 @@ public final class Monarchy {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                synchronized(LOCK) {
-                    if(refCount.decrementAndGet() == 0) {
+                synchronized (LOCK) {
+                    if (refCount.decrementAndGet() == 0) {
                         Realm realm = realmThreadLocal.get();
                         checkRealmValid(realm);
                         realm.close();
-                        if(Realm.getLocalInstanceCount(getRealmConfiguration()) <= 0) {
+                        if (Realm.getLocalInstanceCount(getRealmConfiguration()) <= 0) {
                             realmThreadLocal.set(null);
                         }
                         HandlerThread handlerThread = Monarchy.this.handlerThread.getAndSet(null);
@@ -285,7 +295,7 @@ public final class Monarchy {
     }
 
     private void checkRealmValid(@Nullable Realm realm) {
-        if(realm == null || realm.isClosed()) {
+        if (realm == null || realm.isClosed()) {
             throw new IllegalStateException("Unexpected state: Realm is not open");
         }
     }
@@ -323,7 +333,7 @@ public final class Monarchy {
             realm = Realm.getInstance(configuration);
             realmBlock.doWithRealm(realm);
         } finally {
-            if(realm != null) {
+            if (realm != null) {
                 realm.close();
             }
         }
@@ -402,7 +412,7 @@ public final class Monarchy {
             public void doWithRealm(@NonNull Realm realm) {
                 RealmResults<T> results = query.createQuery(realm).findAll();
                 List<U> list = new ArrayList<>(results.size());
-                for(T t : results) {
+                for (T t : results) {
                     list.add(mapper.map(t));
                 }
                 ref.set(list);
@@ -513,7 +523,7 @@ public final class Monarchy {
      * Forcefully opens the Monarchy thread, keeping it alive until {@link Monarchy#closeManually()} is called.
      */
     public void openManually() {
-        if(isForcedOpen.compareAndSet(false, true)) {
+        if (isForcedOpen.compareAndSet(false, true)) {
             startListening(null);
         } else {
             throw new IllegalStateException("The Monarchy thread is already forced open.");
@@ -526,7 +536,7 @@ public final class Monarchy {
      * This means that the Monarchy thread does not stop unless all observed LiveData are also inactive.
      */
     public void closeManually() {
-        if(isForcedOpen.compareAndSet(true, false)) {
+        if (isForcedOpen.compareAndSet(true, false)) {
             stopListening(null);
         } else {
             throw new IllegalStateException(
@@ -540,7 +550,7 @@ public final class Monarchy {
      * @return if the monarchy thread is open
      */
     public boolean isMonarchyThreadOpen() {
-        synchronized(LOCK) {
+        synchronized (LOCK) {
             return handler.get() != null;
         }
     }
@@ -553,7 +563,7 @@ public final class Monarchy {
      */
     public void postToMonarchyThread(@Nonnull final RealmBlock realmBlock) {
         final Handler _handler = handler.get();
-        if(_handler == null) {
+        if (_handler == null) {
             throw new IllegalStateException(
                     "Cannot post to Monarchy thread when the Monarchy thread is not open.");
         } else {

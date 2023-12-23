@@ -2,6 +2,7 @@ package com.zhuinden.monarchyexample.features.home;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,7 @@ import com.zhuinden.monarchyexample.utils.BaseFragment;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
@@ -44,7 +46,8 @@ public class HomeFragment
 
     @OnClick(R.id.button_mapped)
     public void onMapped(View view) {
-        MainActivity.get(view.getContext()).navigateTo(MappedKey.create());
+        Log.i("HomeFragment", "----onMapped-----onMapped----onMapped--");
+
     }
 
     @OnClick(R.id.button_mapped_rx)
@@ -68,5 +71,9 @@ public class HomeFragment
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ButterKnife.bind(this, view);
+
+        view.findViewById(R.id.button_mapped).setOnClickListener(v -> {
+            MainActivity.get(view.getContext()).navigateTo(MappedKey.create());
+        });
     }
 }
