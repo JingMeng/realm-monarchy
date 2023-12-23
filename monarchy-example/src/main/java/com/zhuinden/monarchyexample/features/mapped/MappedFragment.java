@@ -88,6 +88,53 @@ public class MappedFragment
         }
 
 
+//        systemDefault();
+        useMonarchy();
+        useMonarchyWithThread();
+    }
+
+    private void useMonarchyWithThread() {
+        HandlerThread handlerThread = new HandlerThread("MONARCHY_REALM-#" + hashCode());
+        handlerThread.start();
+        Handler handler = new Handler(handlerThread.getLooper());
+        handler.post(this::useMonarchy);
+
+        /**
+         * 和原生的差距就在  最后的 finally 操作了，这个    realm.close() 被关闭了
+         * 这个的所有查询也就不会再继续监听了
+         *
+         * 1. 一开始是同步异步
+         * 2.后来是关闭了根节点了，也就没有同步异步的说法了
+         */
+        handler.post(() -> monarchy.doWithRealm(realm -> {
+            RealmResults<RealmDog> results = realm.where(RealmDog.class).findAll();
+            Log.i("MappedFragment", "------doWithRealm---这样就可以查询出来数据了------findAll----" + results.size());
+            results.addChangeListener(dogs -> {
+                // React to change
+                Log.i("MappedFragment", "------doWithRealm------这次使用-findAll----而不是 findAllAsync--" + dogs.size());
+            });
+        }));
+    }
+
+    private void useMonarchy() {
+        monarchy.doWithRealm(realm -> {
+            Log.i("MappedFragment", "------doWithRealm----111111-----为什么没有查到数据----");
+            RealmResults<RealmDog> results = realm.where(RealmDog.class).findAllAsync();
+            Log.i("MappedFragment", "------doWithRealm----这个地方执行了吗？---------" + results.size());
+            results.addChangeListener(dogs -> {
+                // React to change
+                Log.i("MappedFragment", "------doWithRealm-------------");
+                Log.i("MappedFragment", "------doWithRealm-------------" + dogs.size());
+            });
+        });
+    }
+
+    /**
+     * 这个是正常执行的
+     * <p>
+     * 这样是默认会被执行的
+     */
+    private void systemDefault() {
         String realmName = "My Project";
         RealmConfiguration config = new RealmConfiguration
                 .Builder()
@@ -115,27 +162,7 @@ public class MappedFragment
         Log.i("MappedFragment", "------doWithRealm----这个地方执行了吗？---------" + results.size());
         results.addChangeListener(dogs -> {
             // React to change
-            Log.i("MappedFragment", "------doWithRealm-------------");
             Log.i("MappedFragment", "------doWithRealm-------------" + dogs.size());
-        });
-
-
-        HandlerThread handlerThread = new HandlerThread("MONARCHY_REALM-#" + hashCode());
-        handlerThread.start();
-        Handler handler = new Handler(handlerThread.getLooper());
-        handler.post(() -> {
-
-
-//            monarchy.doWithRealm(realm -> {
-//                Log.i("MappedFragment", "------doWithRealm----111111-----为什么没有查到数据----");
-//                RealmResults<RealmDog> results = realm.where(RealmDog.class).findAllAsync();
-//                Log.i("MappedFragment", "------doWithRealm----这个地方执行了吗？---------" + results.size());
-//                results.addChangeListener(dogs -> {
-//                    // React to change
-//                    Log.i("MappedFragment", "------doWithRealm-------------");
-//                    Log.i("MappedFragment", "------doWithRealm-------------" + dogs.size());
-//                });
-//            });
         });
     }
 
