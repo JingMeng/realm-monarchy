@@ -105,6 +105,13 @@ public class MappedFragment
          *
          * 1. 一开始是同步异步
          * 2.后来是关闭了根节点了，也就没有同步异步的说法了
+         *   至于这一条可以从 Freezable 里面验证
+         *
+         *    Freezing a collection also creates a Realm which has its own lifecycle, but if the live Realm that spawned the
+         *  original collection is fully closed (i.e. all instances across all threads are closed), the frozen Realm and this
+         *  collection will be closed as well.
+         *
+         *
          */
         handler.post(() -> monarchy.doWithRealm(realm -> {
             RealmResults<RealmDog> results = realm.where(RealmDog.class).findAll();

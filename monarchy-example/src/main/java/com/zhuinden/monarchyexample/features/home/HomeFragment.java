@@ -29,11 +29,23 @@ import butterknife.OnClick;
 
 public class HomeFragment
         extends BaseFragment {
+
+    /**
+     *
+     * CopiedLiveResults copyFromRealml
+     *
+     * @param view
+     */
     @OnClick(R.id.button_copied)
     public void onCopied(View view) {
+
         MainActivity.get(view.getContext()).navigateTo(CopiedKey.create());
     }
 
+    /**
+     * {# FrozenLiveResults.updateResults}
+     * @param view
+     */
     @OnClick(R.id.button_frozen)
     public void onFrozen(View view) {
         MainActivity.get(view.getContext()).navigateTo(FrozenKey.create());
