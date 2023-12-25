@@ -88,9 +88,9 @@ public class MappedFragment
         }
 
 
-//        systemDefault();
-        useMonarchy();
-        useMonarchyWithThread();
+        systemDefault();
+//        useMonarchy();
+//        useMonarchyWithThread();
     }
 
     private void useMonarchyWithThread() {
@@ -166,11 +166,42 @@ public class MappedFragment
 
         Log.i("MappedFragment", "------doWithRealm----111111-----为什么没有查到数据----");
         RealmResults<RealmDog> results = backgroundThreadRealm.where(RealmDog.class).findAllAsync();
+
+        //这个地方没有得到数据
         Log.i("MappedFragment", "------doWithRealm----这个地方执行了吗？---------" + results.size());
+        for (int i = 0; i < results.size(); i++) {
+
+            RealmDog realmDog = results.get(i);
+            if (null == realmDog) {
+                continue;
+            }
+            Log.i("MappedFragment", "------doWithRealm----这个是数据---------" + realmDog.isFrozen());
+            Log.i("MappedFragment", "------doWithRealm----这个是数据---------" + realmDog.isLoaded());
+            Log.i("MappedFragment", "------doWithRealm----这个是数据---------" + realmDog.isManaged());
+            Log.i("MappedFragment", "------doWithRealm----这个是数据---------" + realmDog.isValid());
+        }
         results.addChangeListener(dogs -> {
             // React to change
-            Log.i("MappedFragment", "------doWithRealm-------------" + dogs.size());
+            Log.i("MappedFragment", "------doWithRealm--------dogs.size()-----" + dogs.size());
+
+            for (int i = 0; i < results.size(); i++) {
+
+                RealmDog realmDog = results.get(i);
+                if (null == realmDog) {
+                    continue;
+                }
+                Log.i("MappedFragment", "------doWithRealm----这个是数据-----isFrozen----" + realmDog.isFrozen());
+                Log.i("MappedFragment", "------doWithRealm----这个是数据---isLoaded------" + realmDog.isLoaded());
+                Log.i("MappedFragment", "------doWithRealm----这个是数据-----isManaged----" + realmDog.isManaged());
+                Log.i("MappedFragment", "------doWithRealm----这个是数据----isValid-----" + realmDog.isValid());
+
+                if (i >= 0) {
+                    //看一个打印就好了
+                    break;
+                }
+            }
         });
+
     }
 
     @Override
